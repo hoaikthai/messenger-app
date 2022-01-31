@@ -13,4 +13,15 @@ model User {
   encryptedPassword String @map("encrypted_password")
 
   @@map("users")
+  Message Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  senderId  String   @map("user_id")
+  createdAt DateTime @default(now())
+  sender    User     @relation(fields: [senderId], references: [id])
+
+  @@map("messages")
 }
