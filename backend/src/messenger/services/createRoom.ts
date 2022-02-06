@@ -1,6 +1,7 @@
 import { User } from "@prisma/client"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { buildVerifyJwtDecorator } from "../../auth/decorators/verifyJwt"
+import { createRoomWithUserIds } from "../repositories/createRoomWithUserIds"
 
 export type CreateRoomRequest = {
   userIds: string[]
@@ -34,17 +35,7 @@ export const buildCreateRoomHandler =
   (fastify: FastifyInstance) => async (request: FastifyRequest<CreateRoomService>, reply: FastifyReply) => {
     const { userIds } = request.body
 
-    const room = await fastify.prisma.room.create({
-      data: {
-        users: {
-          connect: userIds.map((userId) => ({ id: userId })),
-        },
-      },
-      select: {
-        id: true,
-        users: true,
-      },
-    })
+    const room = await createRoomWithUserIds(fastify.prisma, userIds)
 
     reply.send(room)
   }

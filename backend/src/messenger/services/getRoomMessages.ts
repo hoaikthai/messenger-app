@@ -1,6 +1,7 @@
 import { Message, User } from "@prisma/client"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { buildVerifyJwtDecorator } from "../../auth/decorators/verifyJwt"
+import { getMessagesWithRoomId } from "../repositories/getMessagesWithRoomId"
 
 export type GetRoomMessagesRequest = {
   roomId: string
@@ -25,14 +26,7 @@ export const getGetRoomMessagesOptions = (fastify: FastifyInstance) => {
 export const buildGetRoomMessagesHandler =
   (fastify: FastifyInstance) => async (request: FastifyRequest<GetRoomMessagesService>, reply: FastifyReply) => {
     const { roomId } = request.params
-    const messages = await fastify.prisma.message.findMany({
-      where: {
-        roomId,
-      },
-      include: {
-        sender: true,
-      },
-    })
+    const messages = getMessagesWithRoomId(fastify.prisma, roomId)
 
     reply.send({ messages })
   }

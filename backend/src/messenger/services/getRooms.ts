@@ -1,6 +1,7 @@
 import { User } from "@prisma/client"
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { buildVerifyJwtDecorator } from "../../auth/decorators/verifyJwt"
+import { getRoomsWithUserId } from "../repositories/getRoomsWithUserId"
 
 export type GetRoomsResponse = {
   rooms: {
@@ -22,14 +23,7 @@ export const getGetRoomsOptions = (fastify: FastifyInstance) => {
 export const buildGetRoomsHandler =
   (fastify: FastifyInstance) => async (request: FastifyRequest<GetRoomsService>, reply: FastifyReply) => {
     const currentUser = request.user as User
-    const rooms = await fastify.prisma.room.findMany({
-      where: {
-        id: currentUser.id,
-      },
-      include: {
-        users: true,
-      },
-    })
+    const rooms = getRoomsWithUserId(fastify.prisma, currentUser.id)
 
     reply.send(rooms)
   }

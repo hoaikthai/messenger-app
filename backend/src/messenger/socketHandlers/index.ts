@@ -2,6 +2,7 @@ import { Message, User } from "@prisma/client"
 import { FastifyInstance } from "fastify"
 import { Socket } from "socket.io"
 import { authMiddleware } from "../middlewares/auth"
+import { getRoomsWithUserId } from "../repositories/getRoomsWithUserId"
 import { SocketEvent } from "../types/SocketEvent"
 
 export const buildSocketHandler = (fastify: FastifyInstance) => {
@@ -10,22 +11,16 @@ export const buildSocketHandler = (fastify: FastifyInstance) => {
   let users: User[] = []
 
   fastify.io.on(SocketEvent.Connect, async (socket: Socket) => {
-    users.push(socket.handshake.auth as User)
+    const currentUser = socket.handshake.auth as User
+
+    users.push(currentUser)
     socket.emit(SocketEvent.OnlineUsersChange, users)
 
-    const rooms = await fastify.prisma.room.findMany({
-      where: {
-        users: {
-          some: {
-            id: socket.handshake.auth.id,
-          },
-        },
-      },
-    })
+    const rooms = await getRoomsWithUserId(fastify.prisma, currentUser.id)
     rooms.forEach((room) => socket.join(room.id))
 
     socket.on(SocketEvent.Disconnect, () => {
-      users = users.filter((user) => user.id !== socket.handshake.auth.id)
+      users = users.filter((user) => user.id !== currentUser.id)
       socket.emit(SocketEvent.OnlineUsersChange, users)
       rooms.forEach((room) => socket.leave(room.id))
     })
@@ -34,7 +29,7 @@ export const buildSocketHandler = (fastify: FastifyInstance) => {
       const messageRecord = await fastify.prisma.message.create({
         data: {
           content: message.content,
-          senderId: socket.handshake.auth.id,
+          senderId: currentUser.id,
           roomId,
         },
       })
