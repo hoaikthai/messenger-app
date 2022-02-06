@@ -13,6 +13,7 @@ import { prismaPlugin } from "./plugins/prisma"
 import { swaggerOptions } from "./plugins/swagger"
 import { SocketEvent } from "./messenger/types/SocketEvent"
 import { Message } from "@prisma/client"
+import { messagerRoutes } from "./messenger"
 
 const server = fastify({ logger: true })
 
@@ -27,6 +28,7 @@ server.register(fastifyCors, corsOptions)
 server.register(fastifyIO)
 
 server.register(authRoutes)
+server.register(messagerRoutes)
 
 server.ready(() => {
   server.io.on(SocketEvent.Connect, (socket) => {
