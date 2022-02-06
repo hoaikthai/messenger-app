@@ -12,16 +12,30 @@ model User {
   username          String @unique
   encryptedPassword String @map("encrypted_password")
 
+  rooms Room[] @relation("users_rooms")
+
+  messages Message[]
   @@map("users")
-  Message Message[]
+}
+
+model Room {
+  id String @id @default(cuid())
+
+  users User[] @relation("users_rooms")
+
+  messages Message[]
+  @@map("rooms")
 }
 
 model Message {
   id        String   @id @default(cuid())
   content   String
   senderId  String   @map("user_id")
+  roomId    String
   createdAt DateTime @default(now())
-  sender    User     @relation(fields: [senderId], references: [id])
+
+  sender User @relation(fields: [senderId], references: [id])
+  room   Room @relation(fields: [roomId], references: [id])
 
   @@map("messages")
 }
