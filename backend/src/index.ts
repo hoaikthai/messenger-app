@@ -11,9 +11,8 @@ import { corsOptions } from "./plugins/cors"
 import { envOptions } from "./plugins/env"
 import { prismaPlugin } from "./plugins/prisma"
 import { swaggerOptions } from "./plugins/swagger"
-import { SocketEvent } from "./messenger/types/SocketEvent"
-import { Message } from "@prisma/client"
 import { messagerRoutes } from "./messenger"
+import { buildSocketHandler } from "./messenger/socketHandlers"
 
 const server = fastify({ logger: true })
 
@@ -30,21 +29,7 @@ server.register(fastifyIO)
 server.register(authRoutes)
 server.register(messagerRoutes)
 
-server.ready(() => {
-  server.io.on(SocketEvent.Connect, (socket) => {
-    console.log("a user connected")
-    socket.send("connected")
-
-    socket.on(SocketEvent.Disconnect, () => {
-      console.log("a user disconnected")
-    })
-
-    socket.on(SocketEvent.Message, (msg: Message) => {
-      socket.send(msg)
-      console.log("message: " + JSON.stringify(msg))
-    })
-  })
-})
+server.ready(() => buildSocketHandler(server))
 
 server.listen(8080, (err, address) => {
   if (err) {

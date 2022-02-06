@@ -30,7 +30,7 @@ model Room {
 model Message {
   id        String   @id @default(cuid())
   content   String
-  senderId  String   @map("user_id")
+  senderId  String
   roomId    String
   createdAt DateTime @default(now())
 
