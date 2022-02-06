@@ -5,11 +5,14 @@ import fastifyCors from "fastify-cors"
 import fastifyEnv from "fastify-env"
 import fastifyJwt from "fastify-jwt"
 import fastifySwagger from "fastify-swagger"
+import fastifyIO from "fastify-socket.io"
 import { authRoutes } from "./auth"
 import { corsOptions } from "./plugins/cors"
 import { envOptions } from "./plugins/env"
 import { prismaPlugin } from "./plugins/prisma"
 import { swaggerOptions } from "./plugins/swagger"
+import { messagerRoutes } from "./messenger"
+import { buildSocketHandler } from "./messenger/socketHandlers"
 
 const server = fastify({ logger: true })
 
@@ -21,8 +24,12 @@ server.register(fastifyBcrypt)
 server.register(fastifySwagger, swaggerOptions)
 server.register(fastifyAuth)
 server.register(fastifyCors, corsOptions)
+server.register(fastifyIO)
 
 server.register(authRoutes)
+server.register(messagerRoutes)
+
+server.ready(() => buildSocketHandler(server))
 
 server.listen(8080, (err, address) => {
   if (err) {
